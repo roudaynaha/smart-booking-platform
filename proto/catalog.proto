@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package catalog;
+
+service CatalogService {
+  rpc GetItem (GetItemRequest) returns (ItemResponse) {}
+  rpc SearchItems (SearchItemsRequest) returns (SearchItemsResponse) {}
+  rpc CreateItem (CreateItemRequest) returns (ItemResponse) {}
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+
+message SearchItemsRequest {
+  string query = 1;
+  string type = 2; // hotel, room, event, activity
+}
+
+message CreateItemRequest {
+  string name = 1;
+  string description = 2;
+  string type = 3;
+  double price = 4;
+}
+
+message ItemResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  double price = 5;
+  bool available = 6;
+}
+
+message SearchItemsResponse {
+  repeated ItemResponse items = 1;
+}

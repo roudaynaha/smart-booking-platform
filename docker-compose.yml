@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  api-gateway:
+  build:
+    context: ./api-gateway
+    dockerfile: Dockerfile
+
+  container_name: api-gateway
+
+  ports:
+    - "3000:3000"
+    - "4000:4000"
+
+  volumes:
+    - ./proto:/proto
+
+  environment:
+    USER_SERVICE_URL: user-service:50051
+    CATALOG_SERVICE_URL: catalog-service:50052
+    BOOKING_SERVICE_URL: booking-service:50053
+    PAYMENT_SERVICE_URL: payment-service:50054
+    NOTIFICATION_SERVICE_URL: notification-service:50055
+
+  depends_on:
+    - user-service
+    - catalog-service
+    - booking-service
+    - payment-service
+    - notification-service
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./proto:/proto
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    ports:
+      - "50052:50052"
+    volumes:
+      - ./proto:/proto
+
+  booking-service:
+    build:
+      context: ./services/booking-service
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "50053:50053"
+    volumes:
+      - ./proto:/proto
+    depends_on:
+      - kafka
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "50054:50054"
+    volumes:
+      - ./proto:/proto
+    depends_on:
+      - kafka
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "50055:50055"
+    volumes:
+      - ./proto:/proto
+    depends_on:
+      - kafka
