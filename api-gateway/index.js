@@ -14,19 +14,19 @@ const resolvers = require('./graphql/resolvers');
 
 async function startServer() {
   const app = express();
-  
+
   app.use(cors());
-  app.use(bodyParser.json());
 
-  // REST API Endpoints
-  app.use('/api/users', userRoutes);
-  app.use('/api/catalog', catalogRoutes);
-  app.use('/api/bookings', bookingRoutes);
-
-  // GraphQL Apollo Server
+  // GraphQL Apollo Server — must be registered BEFORE bodyParser global middleware
   const server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
   server.applyMiddleware({ app, path: '/graphql' });
+
+  // Apply bodyParser only to REST routes (after GraphQL to avoid stream conflict)
+  app.use('/api', bodyParser.json());
+  app.use('/api/users', userRoutes);
+  app.use('/api/catalog', catalogRoutes);
+  app.use('/api/bookings', bookingRoutes);
 
   app.get('/', (req, res) => {
     res.send('API Gateway is running. /api/* for REST, /graphql for GraphQL');

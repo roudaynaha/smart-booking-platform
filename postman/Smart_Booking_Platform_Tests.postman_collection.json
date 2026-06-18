@@ -1,0 +1,386 @@
+{
+  "info": {
+    "name": "Smart Booking Platform - Tests Complets",
+    "description": "Collection complète REST + GraphQL + gRPC pour la plateforme de réservation SOA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "item_id", "value": "", "type": "string" },
+    { "key": "booking_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01 - REST - Users",
+      "item": [
+        {
+          "name": "GET Gateway Health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Gateway running', () => pm.expect(pm.response.text()).to.include('API Gateway'));"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/", "host": ["{{base_url}}"] }
+          }
+        },
+        {
+          "name": "POST Create User",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has user id', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.collectionVariables.set('user_id', r.id); });",
+            "pm.test('Has name and email', () => { const r = pm.response.json(); pm.expect(r.name).to.equal('Alice Martin'); pm.expect(r.email).to.equal('alice@test.com'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Martin\",\n  \"email\": \"alice@test.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/users", "host": ["{{base_url}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "POST Create User 2",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Second user created', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bob Dupont\",\n  \"email\": \"bob@test.com\",\n  \"password\": \"securepass\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/users", "host": ["{{base_url}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "GET User by ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Correct user returned', () => { const r = pm.response.json(); pm.expect(r.id).to.equal(pm.collectionVariables.get('user_id')); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["api", "users", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "GET User Not Found",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404', () => pm.response.to.have.status(404));",
+            "pm.test('Error message', () => { const r = pm.response.json(); pm.expect(r.error).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/nonexistent-id-999", "host": ["{{base_url}}"], "path": ["api", "users", "nonexistent-id-999"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - REST - Catalog",
+      "item": [
+        {
+          "name": "POST Create Item (Hotel)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Item created', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.collectionVariables.set('item_id', r.id); });",
+            "pm.test('Available is true', () => pm.expect(pm.response.json().available).to.be.true);"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Chambre Deluxe Paris\",\n  \"description\": \"Chambre luxueuse avec vue sur la Tour Eiffel\",\n  \"type\": \"hotel\",\n  \"price\": 250.00\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/catalog", "host": ["{{base_url}}"], "path": ["api", "catalog"] }
+          }
+        },
+        {
+          "name": "POST Create Item (Vol)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Flight created', () => pm.expect(pm.response.json().type).to.equal('flight'));"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vol Paris-NYC\",\n  \"description\": \"Vol direct Paris Charles de Gaulle - New York JFK\",\n  \"type\": \"flight\",\n  \"price\": 799.50\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/catalog", "host": ["{{base_url}}"], "path": ["api", "catalog"] }
+          }
+        },
+        {
+          "name": "GET Search All Items",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Items array returned', () => { const r = pm.response.json(); pm.expect(r.items).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/catalog?query=&type=", "host": ["{{base_url}}"], "path": ["api", "catalog"], "query": [{ "key": "query", "value": "" }, { "key": "type", "value": "" }] }
+          }
+        },
+        {
+          "name": "GET Search by Type (hotel)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Only hotels returned', () => { const r = pm.response.json(); r.items.forEach(i => pm.expect(i.type).to.equal('hotel')); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/catalog?query=&type=hotel", "host": ["{{base_url}}"], "path": ["api", "catalog"], "query": [{ "key": "query", "value": "" }, { "key": "type", "value": "hotel" }] }
+          }
+        },
+        {
+          "name": "GET Search by Name",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Results contain search term', () => { const r = pm.response.json(); r.items.forEach(i => pm.expect(i.name.toLowerCase()).to.include('paris')); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/catalog?query=Paris&type=", "host": ["{{base_url}}"], "path": ["api", "catalog"], "query": [{ "key": "query", "value": "Paris" }, { "key": "type", "value": "" }] }
+          }
+        },
+        {
+          "name": "GET Item by ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Item has required fields', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.expect(r.price).to.be.a('number'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/catalog/{{item_id}}", "host": ["{{base_url}}"], "path": ["api", "catalog", "{{item_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - REST - Bookings",
+      "item": [
+        {
+          "name": "POST Create Booking",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Booking created with PENDING status', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.expect(r.status).to.equal('PENDING'); pm.collectionVariables.set('booking_id', r.id); });",
+            "pm.test('Has user and item ids', () => { const r = pm.response.json(); pm.expect(r.user_id).to.exist; pm.expect(r.item_id).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"item_id\": \"{{item_id}}\",\n  \"start_date\": \"2026-07-01\",\n  \"end_date\": \"2026-07-05\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/bookings", "host": ["{{base_url}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "GET Booking by ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Correct booking returned', () => { const r = pm.response.json(); pm.expect(r.id).to.equal(pm.collectionVariables.get('booking_id')); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/bookings/{{booking_id}}", "host": ["{{base_url}}"], "path": ["api", "bookings", "{{booking_id}}"] }
+          }
+        },
+        {
+          "name": "GET User Bookings",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Bookings array returned', () => { const r = pm.response.json(); pm.expect(r.bookings).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/bookings/user/{{user_id}}", "host": ["{{base_url}}"], "path": ["api", "bookings", "user", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "POST Cancel Booking",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is CANCELLED', () => { const r = pm.response.json(); pm.expect(r.status).to.equal('CANCELLED'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel", "host": ["{{base_url}}"], "path": ["api", "bookings", "{{booking_id}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - GraphQL",
+      "item": [
+        {
+          "name": "GQL - Get User",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('No GraphQL errors', () => { const r = pm.response.json(); pm.expect(r.errors).to.be.undefined; });",
+            "pm.test('User data returned', () => { const r = pm.response.json(); pm.expect(r.data.user.name).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetUser($id: ID!) { user(id: $id) { id name email } }\",\n  \"variables\": { \"id\": \"{{user_id}}\" }\n}"
+            },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        },
+        {
+          "name": "GQL - Search Items",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Items array returned', () => { const r = pm.response.json(); pm.expect(r.data.searchItems).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { searchItems(query: \\\"\\\", type: \\\"\\\") { id name type price available } }\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        },
+        {
+          "name": "GQL - Get Booking",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Booking with item data', () => { const r = pm.response.json(); pm.expect(r.data.booking).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetBooking($id: ID!) { booking(id: $id) { id status start_date end_date item { name price type } payment { amount status } } }\",\n  \"variables\": { \"id\": \"{{booking_id}}\" }\n}"
+            },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        },
+        {
+          "name": "GQL - User with Bookings and Notifications",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('User has bookings array', () => { const r = pm.response.json(); pm.expect(r.data.user.bookings).to.be.an('array'); });",
+            "pm.test('User has notifications array', () => { const r = pm.response.json(); pm.expect(r.data.user.notifications).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query FullUser($id: ID!) { user(id: $id) { id name email bookings { id status start_date end_date item { name price } payment { amount status } } notifications { message type } } }\",\n  \"variables\": { \"id\": \"{{user_id}}\" }\n}"
+            },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        },
+        {
+          "name": "GQL - User Bookings Query",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('UserBookings returned', () => { const r = pm.response.json(); pm.expect(r.data.userBookings).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query UserBookings($user_id: ID!) { userBookings(user_id: $user_id) { id status start_date end_date } }\",\n  \"variables\": { \"user_id\": \"{{user_id}}\" }\n}"
+            },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Flux Complet (E2E)",
+      "item": [
+        {
+          "name": "E2E Step 1 - Create User",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('User created for E2E', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.collectionVariables.set('user_id', r.id); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Charlie E2E\",\n  \"email\": \"charlie.e2e@test.com\",\n  \"password\": \"e2epassword\"\n}" },
+            "url": { "raw": "{{base_url}}/api/users", "host": ["{{base_url}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "E2E Step 2 - Create Catalog Item",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Item created for E2E', () => { const r = pm.response.json(); pm.expect(r.id).to.exist; pm.collectionVariables.set('item_id', r.id); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Suite E2E Test\",\n  \"description\": \"Suite de test end-to-end\",\n  \"type\": \"hotel\",\n  \"price\": 500.00\n}" },
+            "url": { "raw": "{{base_url}}/api/catalog", "host": ["{{base_url}}"], "path": ["api", "catalog"] }
+          }
+        },
+        {
+          "name": "E2E Step 3 - Create Booking (triggers Kafka)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Booking PENDING created', () => { const r = pm.response.json(); pm.expect(r.status).to.equal('PENDING'); pm.collectionVariables.set('booking_id', r.id); });",
+            "pm.test('Kafka booking.created event triggered', () => { pm.expect(pm.response.json().id).to.exist; });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"item_id\": \"{{item_id}}\",\n  \"start_date\": \"2026-08-10\",\n  \"end_date\": \"2026-08-15\"\n}" },
+            "url": { "raw": "{{base_url}}/api/bookings", "host": ["{{base_url}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "E2E Step 4 - GraphQL Full Verification",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('GraphQL resolves complete user graph', () => { const r = pm.response.json(); pm.expect(r.data.user).to.exist; pm.expect(r.data.user.bookings).to.be.an('array'); });"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"query\": \"query FullUser($id: ID!) { user(id: $id) { id name email bookings { id status item { name price } payment { amount status } } notifications { message type } } }\",\n  \"variables\": { \"id\": \"{{user_id}}\" }\n}" },
+            "url": { "raw": "{{base_url}}/graphql", "host": ["{{base_url}}"], "path": ["graphql"] }
+          }
+        },
+        {
+          "name": "E2E Step 5 - Cancel Booking (triggers Kafka)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Booking CANCELLED', () => pm.expect(pm.response.json().status).to.equal('CANCELLED'));",
+            "pm.test('Kafka booking.cancelled event triggered', () => pm.expect(pm.response.json().id).to.exist);"
+          ], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel", "host": ["{{base_url}}"], "path": ["api", "bookings", "{{booking_id}}", "cancel"] }
+          }
+        }
+      ]
+    }
+  ]
+}
